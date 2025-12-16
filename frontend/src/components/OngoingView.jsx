@@ -172,22 +172,6 @@ function OngoingView() {
   return (
     <>
     <div className="space-y-4">
-      {/* Data Quality Note */}
-      <div className="bg-blue-950 border border-blue-800 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h4 className="text-blue-200 font-semibold text-sm">📊 Lưu ý về Dữ liệu</h4>
-            <p className="text-blue-300 text-xs mt-1">
-              Hệ thống đã lọc và chỉ hiển thị các khóa học có đủ dữ liệu tương tác để đảm bảo độ tin cậy của dự đoán. 
-              Các khóa học có inactive rate quá cao (>99.9%) hoặc không có hoạt động tương tác đã được loại bỏ.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Warning Alert */}
       {hasCriticalCourses && (
         <div className="bg-red-950 border border-red-800 rounded-lg p-4">

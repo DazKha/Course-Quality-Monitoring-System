@@ -530,12 +530,11 @@ def get_stats(type: str = "ongoing"):
                 "excellent_percentage": round(excellent / total * 100, 1) if total > 0 else 0
             }
         else:
-            # Get stats from ongoing courses (G3 predictions)
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            g3_path = os.path.join(current_dir, "..", "data", "predicted", "course_engagement_by_course_G3_with_predictions.csv")
+            # Get stats from ongoing courses - use same data as /api/ongoing-prediction
+            # This ensures consistency between stats and actual displayed courses
+            ongoing_courses = generate_ongoing_data()
             
-            if not os.path.exists(g3_path):
-                print(f"Warning: G3 prediction file not found at {g3_path}")
+            if not ongoing_courses:
                 return {
                     "critical": 0,
                     "acceptable": 0,
@@ -546,50 +545,30 @@ def get_stats(type: str = "ongoing"):
                     "excellent_percentage": 0
                 }
             
-            # Load G3 data (latest predictions)
-            df_g3 = pd.read_csv(g3_path)
-            print(f"Loaded G3 data: {len(df_g3)} courses for stats")
+            # Helper to get latest prediction from course data
+            def get_latest_prediction(course_data):
+                for stage in reversed(course_data):
+                    if stage.prediction:
+                        return stage.prediction
+                return None
             
-            # Helper function to safely get value
-            def safe_get(row, col, default=None):
-                try:
-                    if col in row.index:
-                        value = row[col]
-                        return value if pd.notna(value) else default
-                except (AttributeError, KeyError):
-                    pass
-                return default
-            
-            # Count by CQS_label_pred (predicted label)
+            # Count by latest prediction
             critical = 0
             acceptable = 0
             excellent = 0
             
-            for idx, row in df_g3.iterrows():
-                cqs_label = safe_get(row, 'CQS_label_pred', '')
-                cqs_num = safe_get(row, 'CQS_num_pred')
-                
-                # Check by number first, then by label
-                if pd.notna(cqs_num):
-                    cqs_num = int(cqs_num)
-                    if cqs_num == 0:
-                        critical += 1
-                    elif cqs_num == 1:
-                        acceptable += 1
-                    elif cqs_num == 2:
-                        excellent += 1
-                elif pd.notna(cqs_label):
-                    cqs_str = str(cqs_label).strip()
-                    if "Needs Improvement" in cqs_str or "needs" in cqs_str.lower():
-                        critical += 1
-                    elif "Acceptable" in cqs_str or "acceptable" in cqs_str.lower():
-                        acceptable += 1
-                    elif "Excellent" in cqs_str or "excellent" in cqs_str.lower():
-                        excellent += 1
+            for course in ongoing_courses:
+                latest = get_latest_prediction(course.data)
+                if latest == "Needs Improvement":
+                    critical += 1
+                elif latest == "Acceptable":
+                    acceptable += 1
+                elif latest == "Excellent":
+                    excellent += 1
             
-            total = len(df_g3)
+            total = len(ongoing_courses)
             
-            print(f"Ongoing stats: Critical={critical}, Acceptable={acceptable}, Excellent={excellent}, Total={total}")
+            print(f"Ongoing stats (from ongoing courses): Critical={critical}, Acceptable={acceptable}, Excellent={excellent}, Total={total}")
             
             return {
                 "critical": critical,
