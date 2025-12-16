@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Loader2, X, BarChart3, Users, MessageSquare, Eye, TrendingUp } from 'lucide-react';
+import { getApiUrl } from '../config';
 
 function HistoricalView() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [filterLabel, setFilterLabel] = useState('all'); // 'all' | 'Needs Improvement' | 'Acceptable' | 'Excellent'
- 
+
   useEffect(() => {
     fetchHistoricalData();
   }, []);
@@ -15,7 +16,7 @@ function HistoricalView() {
   const fetchHistoricalData = async () => {
     try {
       console.log('Fetching historical data from /api/historical-data...');
-      const response = await fetch('/api/historical-data');
+      const response = await fetch(getApiUrl('/api/historical-data'));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

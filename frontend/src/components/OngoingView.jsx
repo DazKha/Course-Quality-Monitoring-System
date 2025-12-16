@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+import { getApiUrl } from '../config';
 
 function OngoingView() {
   const [courses, setCourses] = useState([]);
@@ -15,7 +16,7 @@ function OngoingView() {
 
   const fetchOngoingData = async () => {
     try {
-      const response = await fetch('/api/ongoing-prediction');
+      const response = await fetch(getApiUrl('/api/ongoing-prediction'));
       const data = await response.json();
       
       // Helper to get latest prediction

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import HistoricalView from './HistoricalView';
 import OngoingView from './OngoingView';
+import { getApiUrl } from '../config';
 
 function Dashboard() {
   const [view, setView] = useState('historical'); // 'historical' or 'ongoing'
@@ -16,7 +17,7 @@ function Dashboard() {
     try {
       const statsType = view === 'historical' ? 'historical' : 'ongoing';
       console.log(`Fetching stats from /api/stats?type=${statsType}...`);
-      const response = await fetch(`/api/stats?type=${statsType}`);
+      const response = await fetch(getApiUrl(`/api/stats?type=${statsType}`));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
