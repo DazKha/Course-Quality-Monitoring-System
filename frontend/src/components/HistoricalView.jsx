@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Loader2, X, BarChart3, Users, MessageSquare, Eye, TrendingUp } from 'lucide-react';
 import { getApiUrl } from '../config';
 
@@ -8,6 +8,8 @@ function HistoricalView() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [filterLabel, setFilterLabel] = useState('all'); // 'all' | 'Needs Improvement' | 'Acceptable' | 'Excellent'
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 20;
 
   useEffect(() => {
     fetchHistoricalData();
@@ -41,28 +43,64 @@ function HistoricalView() {
   };
 
   // Use useMemo to optimize data processing
-  const { needsImprovement, acceptable, excellent, pieDataWithPercentage } = useMemo(() => {
+  const { needsImprovement, acceptable, excellent, pieDataCQS, engagementBarData } = useMemo(() => {
     const needs = data.filter(c => c.CQS === 'Needs Improvement');
     const accept = data.filter(c => c.CQS === 'Acceptable');
     const excel = data.filter(c => c.CQS === 'Excellent');
     
-    const pieData = [
-      { name: 'Needs Imp.', value: needs.length, color: '#ef4444' },
-      { name: 'Acceptable', value: accept.length, color: '#f97316' },
-      { name: 'Excellent', value: excel.length, color: '#22c55e' }
+    // Pie chart 1: Distribution by CQS category
+    const pieDataCQS = [
+      { name: 'Cần cải thiện', value: needs.length, color: '#ef4444', fullName: 'Needs Improvement' },
+      { name: 'Chấp nhận được', value: accept.length, color: '#f97316', fullName: 'Acceptable' },
+      { name: 'Xuất sắc', value: excel.length, color: '#22c55e', fullName: 'Excellent' }
     ];
 
     const total = data.length;
-    const pieWithPercentage = pieData.map(item => ({
+    const cqsWithPercentage = pieDataCQS.map(item => ({
       ...item,
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
     }));
+    
+    // Bar chart: Distribution by Enrollment Size
+    const categorizeByEnrollment = (courses) => {
+      return {
+        small: courses.filter(c => c.enrollment_count < 50).length,
+        medium: courses.filter(c => c.enrollment_count >= 50 && c.enrollment_count < 200).length,
+        large: courses.filter(c => c.enrollment_count >= 200).length
+      };
+    };
+    
+    const needsEnrollment = categorizeByEnrollment(needs);
+    const acceptEnrollment = categorizeByEnrollment(accept);
+    const excelEnrollment = categorizeByEnrollment(excel);
+    
+    const engagementBarData = [
+      {
+        size: 'Nhỏ (<50)',
+        'Cần cải thiện': needsEnrollment.small,
+        'Chấp nhận được': acceptEnrollment.small,
+        'Xuất sắc': excelEnrollment.small
+      },
+      {
+        size: 'Trung bình (50-200)',
+        'Cần cải thiện': needsEnrollment.medium,
+        'Chấp nhận được': acceptEnrollment.medium,
+        'Xuất sắc': excelEnrollment.medium
+      },
+      {
+        size: 'Lớn (≥200)',
+        'Cần cải thiện': needsEnrollment.large,
+        'Chấp nhận được': acceptEnrollment.large,
+        'Xuất sắc': excelEnrollment.large
+      }
+    ];
 
     return {
       needsImprovement: needs,
       acceptable: accept,
       excellent: excel,
-      pieDataWithPercentage: pieWithPercentage
+      pieDataCQS: cqsWithPercentage,
+      engagementBarData
     };
   }, [data]);
 
@@ -73,6 +111,17 @@ function HistoricalView() {
       : data.filter(course => course.CQS === filterLabel);
   }, [data, filterLabel]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredData.length / coursesPerPage);
+  const startIndex = (currentPage - 1) * coursesPerPage;
+  const endIndex = startIndex + coursesPerPage;
+  const currentCourses = filteredData.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterLabel]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -80,41 +129,6 @@ function HistoricalView() {
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const course = payload[0].payload;
-      const color = getPredictionColor(course.CQS);
-      return (
-        <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-2xl max-w-xs">
-          <p className="text-white font-semibold mb-2 text-sm truncate">{course.course_name}</p>
-          <div className="space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Học viên:</span>
-              <span className="text-white font-medium">{course.enrollment_count?.toLocaleString() || 0}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">CQ Score:</span>
-              <span className="text-blue-400 font-medium">{course.course_quality_score?.toFixed(3) || '0.000'}</span>
-            </div>
-            <div className="border-t border-slate-700 pt-1.5 mt-1.5">
-              <span 
-                className="inline-block px-2 py-0.5 rounded text-xs font-medium"
-                style={{ 
-                  backgroundColor: `${color}20`,
-                  color: color,
-                  border: `1px solid ${color}`
-                }}
-              >
-                {course.CQS}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
@@ -155,132 +169,122 @@ function HistoricalView() {
   return (
     <>
       <div className="space-y-6">
-        {/* Charts Section */}
+        {/* Charts Section - Two Pie Charts Side by Side */}
         <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Scatter Chart */}
-          <div className="w-full h-[420px] flex flex-col">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-              <span>Phân bố Chất lượng Khoá học</span>
-            </h3>
-            <div className="flex-1 relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 10, right: 10, bottom: 40, left: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis
-                    type="number"
-                    dataKey="course_quality_score"
-                    name="CQ Score"
-                    domain={[0, 'auto']}
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    label={{ 
-                      value: 'Course Quality Score', 
-                      position: 'insideBottom', 
-                      offset: -5,
-                      style: { fill: '#94a3b8', fontSize: 12 }
-                    }}
-                  />
-                  <YAxis
-                    type="number"
-                    dataKey="learning_interaction_score"
-                    name="LI Score"
-                    domain={[0, 'auto']}
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    label={{ 
-                      value: 'LI Score', 
-                      angle: -90, 
-                      position: 'insideLeft',
-                      style: { fill: '#94a3b8', fontSize: 12 }
-                    }}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter 
-                    name="Needs Imp." 
-                    data={needsImprovement} 
-                    fill="#ef4444" 
-                    opacity={0.7}
-                  />
-                  <Scatter 
-                    name="Acceptable" 
-                    data={acceptable} 
-                    fill="#f97316" 
-                    opacity={0.7}
-                  />
-                  <Scatter 
-                    name="Excellent" 
-                    data={excellent} 
-                    fill="#22c55e" 
-                    opacity={0.7}
-                  />
-                </ScatterChart>
-              </ResponsiveContainer>
+          <h3 className="text-lg font-semibold text-white mb-6 flex items-center space-x-2">
+            <BarChart3 className="w-5 h-5 text-blue-400" />
+            <span>Phân bố Chất lượng Khoá học</span>
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Pie Chart 1: CQS Distribution */}
+            <div className="w-full flex flex-col">
+              <h4 className="text-md font-medium text-slate-300 mb-4 text-center">
+                Phân loại theo CQS
+              </h4>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieDataCQS}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={CustomPieLabel}
+                      outerRadius={100}
+                      innerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieDataCQS.map((entry, index) => (
+                        <Cell key={`cell-cqs-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-xl">
+                              <p className="text-white font-semibold text-sm">{item.name}</p>
+                              <p className="text-slate-300 text-xs">
+                                Số lượng: {item.value}
+                              </p>
+                              <p className="text-slate-300 text-xs">
+                                Tỷ lệ: {item.percentage}%
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legend for CQS */}
+              <div className="flex justify-center gap-4 mt-4">
+                {pieDataCQS.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs text-slate-300">{item.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Pie Chart */}
-          <div className="w-full h-[420px] flex flex-col">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center justify-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <span>Tỷ lệ Phân lớp</span>
-            </h3>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieDataWithPercentage}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={CustomPieLabel}
-                    outerRadius={110}
-                    innerRadius={65}
-                    fill="#8884d8"
-                    dataKey="value"
+            {/* Bar Chart: Distribution by Enrollment Size */}
+            <div className="w-full flex flex-col">
+              <h4 className="text-md font-medium text-slate-300 mb-4 text-center">
+                Phân bố theo Quy mô Học viên
+              </h4>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={engagementBarData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                   >
-                    {pieDataWithPercentage.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const item = payload[0].payload;
-                        return (
-                          <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-xl">
-                            <p className="text-white font-semibold text-sm">{item.name}</p>
-                            <p className="text-slate-300 text-xs">
-                              Số lượng: {item.value}
-                            </p>
-                            <p className="text-slate-300 text-xs">
-                              Tỷ lệ: {item.percentage}%
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis 
+                      dataKey="size" 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      tick={{ fill: '#94a3b8', fontSize: 11 }}
+                      label={{ 
+                        value: 'Số lượng khóa học', 
+                        angle: -90, 
+                        position: 'insideLeft',
+                        style: { fill: '#94a3b8', fontSize: 11 }
+                      }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#0f172a', 
+                        border: '1px solid #334155',
+                        borderRadius: '8px'
+                      }}
+                      labelStyle={{ color: '#fff', fontWeight: 'bold' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '10px' }}
+                      iconType="circle"
+                    />
+                    <Bar dataKey="Cần cải thiện" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Chấp nhận được" stackId="a" fill="#f97316" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Xuất sắc" stackId="a" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Info text */}
+              <div className="text-center mt-4">
+                <p className="text-xs text-slate-400">
+                  Xem chất lượng khóa học có tương quan với quy mô không
+                </p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Legend chung cho cả 2 biểu đồ */}
-        <div className="flex items-center justify-center space-x-6 mt-4 pt-4 border-t border-slate-800">
-          {pieDataWithPercentage.map((item, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: item.color }}
-              ></div>
-              <span className="text-slate-300 text-sm">{item.name}</span>
-              <span className="text-slate-500 text-xs">({item.value})</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Course List Table */}
       <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-800">
@@ -293,7 +297,7 @@ function HistoricalView() {
                 <span>Chi tiết Khóa học Lịch sử</span>
               </h3>
               <p className="text-slate-400 text-xs mt-1">
-                Hiển thị {filteredData.length} / {data.length} khóa học
+                Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredData.length)} / {filteredData.length} khóa học
               </p>
             </div>
             {/* Filter Controls */}
@@ -333,9 +337,9 @@ function HistoricalView() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto" style={{ maxHeight: '500px' }}>
+        <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-800 sticky top-0 z-10">
+            <thead className="bg-slate-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Khóa học
@@ -358,7 +362,7 @@ function HistoricalView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {filteredData.map((course) => {
+              {currentCourses.map((course) => {
                 const predictionColor = getPredictionColor(course.CQS);
                 
                 return (
@@ -400,7 +404,7 @@ function HistoricalView() {
                   </tr>
                 );
               })}
-              {filteredData.length === 0 && (
+              {currentCourses.length === 0 && (
                 <tr>
                   <td colSpan="4" className="px-6 py-12 text-center">
                     <div className="text-slate-400">
@@ -412,6 +416,70 @@ function HistoricalView() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {filteredData.length > coursesPerPage && (
+          <div className="px-6 py-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
+            <div className="text-sm text-slate-400">
+              Trang {currentPage} / {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  currentPage === 1
+                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                    : 'bg-slate-700 text-white hover:bg-slate-600'
+                }`}
+              >
+                ← Trước
+              </button>
+              
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  currentPage === totalPages
+                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                    : 'bg-slate-700 text-white hover:bg-slate-600'
+                }`}
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       </div>
 
@@ -594,4 +662,3 @@ function HistoricalView() {
 }
 
 export default HistoricalView;
-

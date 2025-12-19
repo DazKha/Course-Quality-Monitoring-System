@@ -157,7 +157,7 @@ function Dashboard() {
         {/* Chart Container */}
         <div className="mt-4">
           {view === 'historical' ? <HistoricalView /> : <OngoingView />}
-      </div>
+        </div>
       </div>
     </div>
   );

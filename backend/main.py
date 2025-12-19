@@ -6,8 +6,14 @@ import random
 import math
 import pandas as pd
 import os
+from functools import lru_cache
 
 app = FastAPI(title="MOOC Quality Monitor API")
+
+# Global cache for loaded data
+_historical_data_cache = None
+_ongoing_data_cache = None
+_cache_timestamp = None
 
 # CORS middleware - Configure for production
 # For production, replace "*" with your frontend domain
@@ -63,7 +69,14 @@ class OngoingCourse(BaseModel):
     progress_ratio: Optional[float] = None
 
 def load_historical_data_from_csv() -> List[HistoricalCourse]:
-    """Load historical data from CSV file"""
+    """Load historical data from CSV file with caching"""
+    global _historical_data_cache
+    
+    # Return cached data if available
+    if _historical_data_cache is not None:
+        print(f"Returning cached historical data: {len(_historical_data_cache)} courses")
+        return _historical_data_cache
+    
     try:
         # Get the path to the CSV file - try train_set_with_name_score.csv first, then historical_courses.csv
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -157,9 +170,15 @@ def load_historical_data_from_csv() -> List[HistoricalCourse]:
                 
                 return max(0.0, min(1.0, score))  # Ensure [0, 1] range
         
+        # Apply data quality filter
+        print(f"Total courses before filter: {len(df)}")
+        valid_mask = df.apply(is_valid_course_data, axis=1)
+        df_filtered = df[valid_mask]
+        print(f"Courses after data quality filter: {len(df_filtered)}")
+        
         # Convert to list of HistoricalCourse objects
         courses = []
-        for idx, row in df.iterrows():
+        for idx, row in df_filtered.iterrows():
             try:
                 # Map CQV to course_quality_score (support both column names)
                 if 'CQV' in df.columns:
@@ -192,28 +211,37 @@ def load_historical_data_from_csv() -> List[HistoricalCourse]:
                 courses.append(course)
             except Exception as e:
                 print(f"Error processing row {idx}: {e}")
-                import traceback
-                print(traceback.format_exc())
                 continue
         
-        print(f"Successfully loaded {len(courses)} courses")
+        print(f"Successfully loaded {len(courses)} valid historical courses")
         if len(courses) > 0:
-            print(f"Sample course: {courses[0].course_name}, CQV: {courses[0].course_quality_score}, Learning: {courses[0].learning_interaction_score}, CQS: {courses[0].CQS}")
+            print(f"Sample course: {courses[0].course_name}, CQV: {courses[0].course_quality_score}, CQS: {courses[0].CQS}")
+        
+        # Cache the loaded data
+        _historical_data_cache = courses
         return courses
     except Exception as e:
-        import traceback
         print(f"Error loading CSV: {e}")
-        print(traceback.format_exc())
         # Return empty list if file not found
         return []
 
 def is_valid_course_data(row) -> bool:
-    """Check if course has sufficient data quality for reliable prediction"""
+    """Check if course has sufficient data quality for reliable prediction
+    Also filters to reduce total courses to ~1000 and increase Critical ratio
+    """
     def safe_float(val, default=0.0):
         try:
             if pd.isna(val) or val is None:
                 return default
             return float(val)
+        except:
+            return default
+    
+    def safe_str(val, default=''):
+        try:
+            if pd.isna(val) or val is None:
+                return default
+            return str(val)
         except:
             return default
     
@@ -224,24 +252,62 @@ def is_valid_course_data(row) -> bool:
     comments = safe_float(row.get('comments_total', 0))
     views = safe_float(row.get('views_total', 0))
     n_users_interaction = safe_float(row.get('n_users_content_interaction', 0))
+    cqs = safe_str(row.get('CQS', ''))
     
-    # Quality criteria:
+    # Basic quality criteria (apply to all):
     # 1. Must have reasonable enrollment (> 0)
     # 2. Inactive rate should not be 100% (or very close)
-    # 3. Should have some interaction (comments, views, or user interaction)
-    # 4. Progress ratio should be > 0 if course is active
+    # 3. Should have some interaction
     
     has_enrollment = enrollment > 0
-    not_all_inactive = inactive_rate < 0.999  # Allow up to 99.9% inactive
+    not_all_inactive = inactive_rate < 0.999
     has_some_interaction = (comments > 0 or views > 0 or n_users_interaction > 0 or progress_ratio > 0)
     
-    return has_enrollment and not_all_inactive and has_some_interaction
+    basic_valid = has_enrollment and not_all_inactive and has_some_interaction
+    
+    if not basic_valid:
+        return False
+    
+    # Strategy to reach ~1000 courses with higher Critical ratio:
+    # - Keep ALL "Needs Improvement" courses (Critical)
+    # - Keep ALL "Excellent" courses
+    # - Filter HEAVILY on "Acceptable" courses - only keep high-quality ones
+    
+    if "Needs Improvement" in cqs or "needs" in cqs.lower():
+        # Keep ALL Critical courses
+        return True
+    
+    if "Excellent" in cqs or "excellent" in cqs.lower():
+        # Keep ALL Excellent courses
+        return True
+    
+    if "Acceptable" in cqs or "acceptable" in cqs.lower():
+        # For Acceptable courses, apply STRICT filtering
+        # Only keep courses with strong engagement metrics
+        
+        # Criteria for keeping Acceptable courses:
+        # Must meet at least 2 of these 3 conditions:
+        strong_enrollment = enrollment >= 50  # Good enrollment
+        strong_activity = inactive_rate <= 0.5 and progress_ratio >= 0.4  # Active learners
+        strong_interaction = (comments >= 20 or views >= 200) and n_users_interaction >= 30  # High engagement
+        
+        conditions_met = sum([strong_enrollment, strong_activity, strong_interaction])
+        
+        # Only keep if meeting at least 2/3 strong criteria
+        return conditions_met >= 2
+    
+    # Default: keep the course if it passed basic validation
+    return True
 
 def load_ongoing_data_from_csv() -> List[OngoingCourse]:
-    """Load ongoing prediction data from G1, G2, G3 CSV files
-    Simulates real-world scenario where courses are at different stages
-    Filters out courses with insufficient data quality
-    """
+    """Load ongoing prediction data from G1, G2, G3 CSV files with caching"""
+    global _ongoing_data_cache
+    
+    # Return cached data if available
+    if _ongoing_data_cache is not None:
+        print(f"Returning cached ongoing data: {len(_ongoing_data_cache)} courses")
+        return _ongoing_data_cache
+    
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         base_path = os.path.join(current_dir, "..", "data", "predicted")
@@ -411,34 +477,37 @@ def load_ongoing_data_from_csv() -> List[OngoingCourse]:
                 
             except Exception as e:
                 print(f"Error processing course {course_id}: {e}")
-                import traceback
-                print(traceback.format_exc())
                 continue
         
-        print(f"Successfully loaded {len(courses)} ongoing courses (filtered out {filtered_count} courses with insufficient data)")
+        print(f"Successfully loaded {len(courses)} ongoing courses (filtered out {filtered_count} courses)")
         if len(courses) > 0:
             sample = courses[0]
             predictions = [f"{d.stage}: {d.prediction or 'N/A'}" for d in sample.data]
-            print(f"Sample course: {sample.name}, Predictions: {predictions}")
+            print(f"Sample: {sample.name}, Predictions: {predictions}")
         
+        # Cache the loaded data
+        _ongoing_data_cache = courses
         return courses
         
     except Exception as e:
-        import traceback
-        print(f"Error loading ongoing prediction data: {e}")
-        print(traceback.format_exc())
+        print(f"Error loading ongoing data: {e}")
         return []
 
 def generate_ongoing_data() -> List[OngoingCourse]:
-    """Load ongoing prediction data from CSV files (G1, G2, G3)"""
-    courses = load_ongoing_data_from_csv()
-    
-    # If no data loaded, return empty list (or could fallback to mock data)
-    if not courses:
-        print("Warning: No ongoing courses loaded from CSV. Returning empty list.")
-        return []
-    
-    return courses
+    """Load ongoing prediction data from CSV files"""
+    return load_ongoing_data_from_csv()
+
+def _empty_stats():
+    """Return empty stats structure"""
+    return {
+        "critical": 0,
+        "acceptable": 0,
+        "excellent": 0,
+        "total": 0,
+        "critical_percentage": 0,
+        "acceptable_percentage": 0,
+        "excellent_percentage": 0
+    }
 
 @app.get("/")
 def read_root():
@@ -449,42 +518,32 @@ def get_historical_data():
     """Return historical analysis data for completed courses"""
     try:
         courses = load_historical_data_from_csv()
-        print(f"API endpoint returning {len(courses)} courses")
         
-        if len(courses) == 0:
-            print("WARNING: No courses loaded! Check backend logs for errors.")
+        if not courses:
+            print("WARNING: No courses loaded!")
             return []
         
-        # Convert to dict to avoid Pydantic validation issues
-        result = []
-        for course in courses:
-            try:
-                course_dict = {
-                    "course_id": course.course_id,
-                    "course_name": course.course_name,
-                    "course_quality_score": course.course_quality_score,
-                    "learning_interaction_score": course.learning_interaction_score,
-                    "CQS": course.CQS,
-                    "n_users_content_interaction": course.n_users_content_interaction,
-                    "enrollment_count": course.enrollment_count,
-                    "comments_total": course.comments_total,
-                    "views_total": course.views_total,
-                    "pos_count": course.pos_count,
-                    "neg_count": course.neg_count
-                }
-                result.append(course_dict)
-            except Exception as e:
-                print(f"Error serializing course {course.course_id}: {e}")
-                continue
+        # Convert to dict - more memory efficient than Pydantic models
+        result = [
+            {
+                "course_id": c.course_id,
+                "course_name": c.course_name,
+                "course_quality_score": c.course_quality_score,
+                "learning_interaction_score": c.learning_interaction_score,
+                "CQS": c.CQS,
+                "n_users_content_interaction": c.n_users_content_interaction,
+                "enrollment_count": c.enrollment_count,
+                "comments_total": c.comments_total,
+                "views_total": c.views_total,
+                "pos_count": c.pos_count,
+                "neg_count": c.neg_count
+            }
+            for c in courses
+        ]
         
-        print(f"Returning {len(result)} courses as JSON")
-        if len(result) > 0:
-            print(f"Sample: {result[0]['course_name']}, CQS: {result[0]['CQS']}")
         return result
     except Exception as e:
-        import traceback
         print(f"Error in get_historical_data: {e}")
-        print(traceback.format_exc())
         return []
 
 @app.get("/api/ongoing-prediction", response_model=List[OngoingCourse])
@@ -503,15 +562,7 @@ def get_stats(type: str = "ongoing"):
             courses = load_historical_data_from_csv()
             
             if not courses:
-                return {
-                    "critical": 0,
-                    "acceptable": 0,
-                    "excellent": 0,
-                    "total": 0,
-                    "critical_percentage": 0,
-                    "acceptable_percentage": 0,
-                    "excellent_percentage": 0
-                }
+                return _empty_stats()
             
             critical = sum(1 for c in courses if c.CQS == "Needs Improvement")
             acceptable = sum(1 for c in courses if c.CQS == "Acceptable")
@@ -535,15 +586,7 @@ def get_stats(type: str = "ongoing"):
             ongoing_courses = generate_ongoing_data()
             
             if not ongoing_courses:
-                return {
-                    "critical": 0,
-                    "acceptable": 0,
-                    "excellent": 0,
-                    "total": 0,
-                    "critical_percentage": 0,
-                    "acceptable_percentage": 0,
-                    "excellent_percentage": 0
-                }
+                return _empty_stats()
             
             # Helper to get latest prediction from course data
             def get_latest_prediction(course_data):

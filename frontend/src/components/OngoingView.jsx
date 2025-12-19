@@ -109,7 +109,7 @@ function OngoingView() {
   const stageStats = getStageStats();
 
   const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6'];
-  
+
   // Get latest available prediction for each course
   const getLatestPrediction = (courseData) => {
     // Check from G3 -> G2 -> G1
@@ -249,9 +249,9 @@ function OngoingView() {
                     style={{ width: `${stat.excellentPct}%` }}
                   ></div>
                 </div>
-              </div>
-            </div>
-            
+        </div>
+      </div>
+
             {stat.notReached > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-700">
                 <p className="text-slate-500 text-xs">
@@ -267,25 +267,25 @@ function OngoingView() {
       <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
         <h3 className="text-white font-semibold text-lg mb-4">So sánh Dự đoán qua các Giai đoạn</h3>
         <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%">
             <BarChart data={stageStats} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis 
-                dataKey="stage" 
-                tick={{ fill: '#94a3b8' }}
-                label={{ 
-                  value: 'Giai đoạn', 
-                  position: 'insideBottom', 
-                  offset: -10,
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+            <XAxis
+              dataKey="stage"
+              tick={{ fill: '#94a3b8' }}
+              label={{ 
+                value: 'Giai đoạn', 
+                position: 'insideBottom', 
+                offset: -10,
                   style: { fill: '#94a3b8' }
-                }}
-              />
-              <YAxis 
-                tick={{ fill: '#94a3b8' }}
-                label={{ 
+              }}
+            />
+            <YAxis
+              tick={{ fill: '#94a3b8' }}
+              label={{ 
                   value: 'Số lượng khóa học', 
-                  angle: -90, 
-                  position: 'insideLeft',
+                angle: -90, 
+                position: 'insideLeft',
                   style: { fill: '#94a3b8' }
                 }}
               />
@@ -303,8 +303,8 @@ function OngoingView() {
                     'Excellent': 'Xuất sắc'
                   };
                   return [value, labels[name] || name];
-                }}
-              />
+              }}
+            />
               <Legend 
                 formatter={(value) => {
                   const labels = {
@@ -329,7 +329,7 @@ function OngoingView() {
           </p>
         </div>
       </div>
-
+            
       {/* Critical Courses - Needs Improvement */}
       <div className="bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
         <div className="px-4 py-3 bg-slate-900 border-b border-slate-700">
@@ -404,7 +404,7 @@ function OngoingView() {
                   
                   return (
                     <tr 
-                      key={course.id} 
+                  key={course.id}
                       className="hover:bg-slate-750 transition-colors cursor-pointer"
                       onClick={() => openCourseDetail(course)}
                     >
@@ -473,46 +473,46 @@ function OngoingView() {
           <span className="text-slate-400 text-xs ml-2">Click để xem</span>
         </summary>
         <div className="overflow-x-auto max-h-[500px]">
-          <table className="w-full">
+        <table className="w-full">
             <thead className="bg-slate-900 sticky top-0">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Khóa học</th>
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Khóa học</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Học viên</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Giai đoạn</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">G1</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">G2</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">G3</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700">
-              {courses.map((course, idx) => {
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-700">
+            {courses.map((course, idx) => {
                 const latestPrediction = getLatestPrediction(course.data);
                 const currentStage = getCurrentStage(course.data);
                 const predictionColor = getPredictionColor(latestPrediction);
-                
-                return (
+              
+              return (
                   <tr 
                     key={course.id} 
                     className="hover:bg-slate-750 transition-colors cursor-pointer"
                     onClick={() => openCourseDetail(course)}
                   >
-                    <td className="px-4 py-3">
+                  <td className="px-4 py-3">
                       <div>
                         <p className="text-white text-sm font-medium truncate max-w-[300px] hover:text-blue-400 transition-colors">
                           {course.name}
                         </p>
                         <p className="text-slate-400 text-xs">{course.id}</p>
-                      </div>
-                    </td>
+                    </div>
+                  </td>
                     <td className="px-4 py-3 text-center text-slate-300 text-sm">
-                      {course.current_students.toLocaleString()}
-                    </td>
+                    {course.current_students.toLocaleString()}
+                  </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-blue-400 text-sm font-medium">{currentStage}</span>
                     </td>
-                    {course.data.map((stage, stageIdx) => (
-                      <td key={stageIdx} className="px-4 py-3 text-center">
+                  {course.data.map((stage, stageIdx) => (
+                    <td key={stageIdx} className="px-4 py-3 text-center">
                         {stage.prediction ? (
                           <span 
                             className="inline-block px-2 py-1 rounded text-xs font-medium"
@@ -524,13 +524,13 @@ function OngoingView() {
                             {stage.prediction === 'Needs Improvement' ? 'Needs Imp.' : 
                              stage.prediction === 'Acceptable' ? 'Acceptable' : 
                              'Excellent'}
-                          </span>
+                      </span>
                         ) : (
                           <span className="text-slate-500 text-xs">—</span>
                         )}
-                      </td>
-                    ))}
-                    <td className="px-4 py-3 text-center">
+                    </td>
+                  ))}
+                  <td className="px-4 py-3 text-center">
                       {latestPrediction ? (
                         <div className="flex items-center justify-center space-x-2">
                           <span 
@@ -542,18 +542,18 @@ function OngoingView() {
                             }}
                           >
                             {latestPrediction}
-                          </span>
+                    </span>
                         </div>
                       ) : (
                         <span className="text-slate-500 text-sm">N/A</span>
                       )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       </details>
     </div>
 
