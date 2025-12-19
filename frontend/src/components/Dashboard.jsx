@@ -119,13 +119,13 @@ function Dashboard() {
               <span>
                 {view === 'historical' 
                   ? 'Phân bố Chất lượng Khóa học' 
-                  : 'Dự đoán Rủi ro Theo Thời gian'}
+                  : 'Dự đoán sớm Chất lượng Khoá học Theo Giai đoạn'}
               </span>
             </h2>
             <p className="text-slate-400 text-sm mt-1">
               {view === 'historical'
                 ? 'Trục X: Course Quality Score — Trục Y: Learning Interaction Score'
-                : 'Theo dõi xác suất rủi ro của khóa học đang hoạt động qua các giai đoạn'}
+                : 'Theo dõi dự đoán và cảnh báo sớm của khóa học đang hoạt động qua các giai đoạn'}
             </p>
           </div>
 

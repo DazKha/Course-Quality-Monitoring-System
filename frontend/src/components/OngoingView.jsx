@@ -178,7 +178,7 @@ function OngoingView() {
           <div className="flex items-start space-x-3">
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-red-200 font-semibold text-sm">⚠️ Cảnh báo sớm - Courses cần can thiệp</h4>
+              <h4 className="text-red-200 font-semibold text-sm">Cảnh báo sớm - Courses cần can thiệp</h4>
               <p className="text-red-300 text-xs mt-1">
                 Phát hiện {courses.filter(c => getLatestPrediction(c.data) === 'Needs Improvement').length} khóa học được dự đoán "Needs Improvement". 
                 Cần đánh giá và can thiệp ngay để cải thiện chất lượng.
@@ -325,7 +325,7 @@ function OngoingView() {
         <div className="mt-4 text-slate-400 text-sm space-y-2">
           <p>📊 Biểu đồ thể hiện phân bố dự đoán tại mỗi giai đoạn. Số lượng khóa học giảm dần vì chưa tất cả đều đạt G2, G3.</p>
           <p className="text-xs text-slate-500">
-            💡 <span className="italic">Chỉ hiển thị khóa học có đủ dữ liệu tương tác để đảm bảo độ chính xác của dự đoán.</span>
+
           </p>
         </div>
       </div>
@@ -860,11 +860,6 @@ function OngoingView() {
               className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-md transition-colors"
             >
               Đóng
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-            >
-              Xuất báo cáo
             </button>
           </div>
         </div>

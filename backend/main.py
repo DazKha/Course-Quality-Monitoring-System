@@ -279,7 +279,15 @@ def is_valid_course_data(row) -> bool:
     
     if "Excellent" in cqs or "excellent" in cqs.lower():
         # Keep ALL Excellent courses
-        return True
+        strong_enrollment = enrollment >= 1  # Good enrollment
+        strong_activity = inactive_rate <= 0.5 and progress_ratio >= 0.4  # Active learners
+        strong_interaction = (comments >= 15 or views >= 100) and n_users_interaction >= 10  # High engagement
+        
+        conditions_met = sum([strong_enrollment, strong_activity, strong_interaction])
+        
+        # Only keep if meeting at least 2/3 strong criteria
+        return conditions_met >= 2
+        # return True
     
     if "Acceptable" in cqs or "acceptable" in cqs.lower():
         # For Acceptable courses, apply STRICT filtering
@@ -287,9 +295,10 @@ def is_valid_course_data(row) -> bool:
         
         # Criteria for keeping Acceptable courses:
         # Must meet at least 2 of these 3 conditions:
-        strong_enrollment = enrollment >= 50  # Good enrollment
+        # strong_enrollment = enrollment >= 50  # Good enrollment
+        strong_enrollment = enrollment >= 1  # Good enrollment
         strong_activity = inactive_rate <= 0.5 and progress_ratio >= 0.4  # Active learners
-        strong_interaction = (comments >= 20 or views >= 200) and n_users_interaction >= 30  # High engagement
+        strong_interaction = (comments >= 15 or views >= 100) and n_users_interaction >= 20  # High engagement
         
         conditions_met = sum([strong_enrollment, strong_activity, strong_interaction])
         

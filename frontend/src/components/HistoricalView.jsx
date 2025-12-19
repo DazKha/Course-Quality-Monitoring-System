@@ -9,7 +9,7 @@ function HistoricalView() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [filterLabel, setFilterLabel] = useState('all'); // 'all' | 'Needs Improvement' | 'Acceptable' | 'Excellent'
   const [currentPage, setCurrentPage] = useState(1);
-  const coursesPerPage = 20;
+  const coursesPerPage = 10;
 
   useEffect(() => {
     fetchHistoricalData();
@@ -180,7 +180,7 @@ function HistoricalView() {
             {/* Pie Chart 1: CQS Distribution */}
             <div className="w-full flex flex-col">
               <h4 className="text-md font-medium text-slate-300 mb-4 text-center">
-                Phân loại theo CQS
+                Phân loại theo Chất lượng khóa học
               </h4>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
