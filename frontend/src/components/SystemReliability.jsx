@@ -9,8 +9,8 @@ function SystemReliability() {
     // Performance data by phase
     const performanceData = [
         { phase: 'Phase 1', range: '0–25% khóa học', accuracy: 0.69, recall: 0.96, precision: 0.71, macroF1: 0.60 },
-        { phase: 'Phase 2', range: '0–50% khóa học', accuracy: 0.80, recall: 0.94, precision: 0.87, macroF1: 0.70 },
-        { phase: 'Phase 3', range: '0–75% khóa học', accuracy: 0.82, recall: 0.94, precision: 0.90, macroF1: 0.72 },
+        { phase: 'Phase 2', range: '0–50% khóa học', accuracy: 0.81, recall: 0.94, precision: 0.89, macroF1: 0.71 },
+        { phase: 'Phase 3', range: '0–75% khóa học', accuracy: 0.83, recall: 0.94, precision: 0.93, macroF1: 0.72 },
     ];
 
     // Chart data for accuracy trend
@@ -78,7 +78,7 @@ function SystemReliability() {
                         </div>
                         <div className="text-center mt-4">
                             <div className="text-4xl font-bold text-blue-400 mb-2">
-                                69% → 82%
+                                69% → 83%
                             </div>
                             <div className="text-sm text-slate-400">Accuracy</div>
                             <div className="text-xs text-blue-300 mt-2">Tăng dần qua các Phase</div>
@@ -97,7 +97,7 @@ function SystemReliability() {
                             <div className="text-2xl font-bold text-purple-400 mb-2">
                                 Ưu tiên cảnh báo sớm
                             </div>
-                            <div className="text-sm text-slate-400 mt-2">Không bỏ sót khóa học chất lượng thấp</div>
+                            <div className="text-sm text-slate-400 mt-2">Phát hiện sớm rủi ro, giảm cảnh báo nhầm theo thời gian</div>
                         </div>
                     </div>
                 </div>

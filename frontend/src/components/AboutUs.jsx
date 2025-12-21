@@ -107,7 +107,7 @@ function AboutUs() {
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold">1</div>
               <div>
                 <h4 className="text-blue-400 font-medium">Ingestion</h4>
-                <p className="text-slate-300 text-sm">Tổng hợp Log hành vi (Clickstream), Tương tác video và Thảo luận từ nền tảng MOOCCubeX.</p>
+                <p className="text-slate-300 text-sm">Tổng hợp Log hành vi, Tương tác video và Thảo luận.</p>
               </div>
             </div>
 
