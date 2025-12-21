@@ -390,7 +390,7 @@ def load_ongoing_data_from_csv() -> List[OngoingCourse]:
         
         courses = []
         filtered_count = 0
-        stages = ["G1", "G2", "G3"]
+        stages = ["Phase 1", "Phase 2", "Phase 3"]
         
         for course_id in all_course_ids:
             try:
@@ -422,7 +422,7 @@ def load_ongoing_data_from_csv() -> List[OngoingCourse]:
                 # G1 - always available
                 g1_label = get_cqs_label(row)
                 stage_data.append(StageData(
-                    stage="G1",
+                    stage="Phase 1",
                     prediction=g1_label,
                     confidence=None
                 ))
@@ -433,15 +433,15 @@ def load_ongoing_data_from_csv() -> List[OngoingCourse]:
                         g2_row_data = g2_row.iloc[0]
                         g2_label = get_cqs_label(g2_row_data)
                         stage_data.append(StageData(
-                            stage="G2",
+                            stage="Phase 2",
                             prediction=g2_label,
                             confidence=None
                         ))
                     else:
-                        stage_data.append(StageData(stage="G2", prediction=None, confidence=None))
+                        stage_data.append(StageData(stage="Phase 2", prediction=None, confidence=None))
                 else:
                     # Course hasn't reached G2 yet
-                    stage_data.append(StageData(stage="G2", prediction=None, confidence=None))
+                    stage_data.append(StageData(stage="Phase 2", prediction=None, confidence=None))
                 
                 # G3 - only if course has progressed further
                 if course_id in upto_g3_ids:
@@ -449,15 +449,15 @@ def load_ongoing_data_from_csv() -> List[OngoingCourse]:
                         g3_row_data = g3_row.iloc[0]
                         g3_label = get_cqs_label(g3_row_data)
                         stage_data.append(StageData(
-                            stage="G3",
+                            stage="Phase 3",
                             prediction=g3_label,
                             confidence=None
                         ))
                     else:
-                        stage_data.append(StageData(stage="G3", prediction=None, confidence=None))
+                        stage_data.append(StageData(stage="Phase 3", prediction=None, confidence=None))
                 else:
                     # Course hasn't reached G3 yet
-                    stage_data.append(StageData(stage="G3", prediction=None, confidence=None))
+                    stage_data.append(StageData(stage="Phase 3", prediction=None, confidence=None))
                 
                 course = OngoingCourse(
                     id=str(course_id),
