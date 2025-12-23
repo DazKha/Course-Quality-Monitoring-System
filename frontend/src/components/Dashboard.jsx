@@ -124,7 +124,7 @@ function Dashboard() {
             </h2>
             <p className="text-slate-400 text-sm mt-1">
               {view === 'historical'
-                ? 'Trục X: Course Quality Score — Trục Y: Learning Interaction Score'
+                ? 'Tổng hợp, thống kê và phân tích chất lượng các khóa học đã kết thúc, phục vụ đánh giá và cải tiến nội dung'
                 : 'Theo dõi dự đoán và cảnh báo sớm của khóa học đang hoạt động qua các giai đoạn'}
             </p>
           </div>
@@ -134,8 +134,8 @@ function Dashboard() {
             <button
               onClick={() => setView('historical')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'historical'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
               Historical Data
@@ -143,8 +143,8 @@ function Dashboard() {
             <button
               onClick={() => setView('ongoing')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'ongoing'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
               Ongoing Prediction
