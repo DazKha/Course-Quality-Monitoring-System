@@ -1,0 +1,596 @@
+═══════════════════════════════════════════════════════════════════════════════
+  📊 MOOC QUALITY MONITOR - FRONTEND DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Version: 1.0
+Updated: 2025-12-22
+Team: DS317
+Status: ✅ Production Ready
+
+═══════════════════════════════════════════════════════════════════════════════
+  📑 MỤC LỤC
+═══════════════════════════════════════════════════════════════════════════════
+
+1. TỔNG QUAN HỆ THỐNG
+2. KIẾN TRÚC FRONTEND
+3. COMPONENTS CHI TIẾT
+   3.1 App.jsx - Root Component
+   3.2 Dashboard.jsx - Main Dashboard
+   3.3 HistoricalView.jsx - Historical Analysis
+   3.4 OngoingView.jsx - Ongoing Predictions
+   3.5 SystemReliability.jsx - Model Performance
+   3.6 AboutUs.jsx - Project Information
+4. DESIGN SYSTEM
+5. API INTEGRATION
+6. LUỒNG DỮ LIỆU
+7. RESPONSIVE DESIGN
+8. CHARTS CONFIGURATION
+9. UTILITY FUNCTIONS
+10. DEPENDENCIES
+
+═══════════════════════════════════════════════════════════════════════════════
+  1. TỔNG QUAN HỆ THỐNG
+═══════════════════════════════════════════════════════════════════════════════
+
+MOOC Quality Monitor là hệ thống web application giám sát và dự đoán chất lượng 
+các khóa học trực tuyến (MOOC).
+
+MỤC TIÊU CHÍNH:
+✅ Phát hiện sớm các khóa học cần cải thiện
+✅ Cung cấp insights qua visualization
+✅ Hỗ trợ ra quyết định dựa trên dữ liệu
+✅ Đảm bảo tính minh bạch của mô hình AI
+
+═══════════════════════════════════════════════════════════════════════════════
+  2. KIẾN TRÚC FRONTEND
+═══════════════════════════════════════════════════════════════════════════════
+
+CẤU TRÚC THƯ MỤC:
+frontend/
+├── src/
+│   ├── App.jsx                 # Root component, routing
+│   ├── config.js               # API configuration
+│   ├── components/
+│   │   ├── Dashboard.jsx       # Main dashboard với stats cards
+│   │   ├── HistoricalView.jsx  # Phân tích dữ liệu lịch sử
+│   │   ├── OngoingView.jsx     # Dự đoán ongoing courses
+│   │   ├── SystemReliability.jsx # Đánh giá độ tin cậy hệ thống
+│   │   └── AboutUs.jsx         # Thông tin dự án & team
+│   └── index.css               # Global styles
+├── package.json
+└── vite.config.js
+
+TECH STACK:
+- Framework: React 18 + Vite
+- Styling: Tailwind CSS
+- Charts: Recharts
+- Icons: Lucide React
+- HTTP Client: Fetch API
+
+═══════════════════════════════════════════════════════════════════════════════
+  3. COMPONENTS CHI TIẾT
+═══════════════════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────────────────
+  3.1 App.jsx - Root Component
+───────────────────────────────────────────────────────────────────────────────
+
+CHỨC NĂNG:
+- Component gốc của toàn bộ ứng dụng
+- Quản lý routing giữa các pages
+- Cung cấp navigation header
+
+STATE MANAGEMENT:
+const [activeTab, setActiveTab] = useState('dashboard');
+// Giá trị: 'dashboard' | 'reliability' | 'about'
+
+NAVIGATION TABS:
+1. 🏠 Dashboard - Trang chính với stats và charts
+2. 🛡️ System Reliability - Đánh giá hiệu năng mô hình
+3. ℹ️ About Us - Thông tin dự án
+
+───────────────────────────────────────────────────────────────────────────────
+  3.2 Dashboard.jsx - Main Dashboard
+───────────────────────────────────────────────────────────────────────────────
+
+CHỨC NĂNG:
+- Hiển thị tổng quan thống kê (stats cards)
+- Toggle giữa Historical và Ongoing views
+- Fetch và display real-time statistics từ API
+
+STATE MANAGEMENT:
+const [view, setView] = useState('historical');
+const [stats, setStats] = useState(null);
+const [loading, setLoading] = useState(true);
+
+API ENDPOINT:
+GET /api/stats?type={historical|ongoing}
+
+RESPONSE:
+{
+  critical: number,
+  acceptable: number,
+  excellent: number,
+  total: number,
+  critical_percentage: number,
+  acceptable_percentage: number,
+  excellent_percentage: number
+}
+
+STATS CARDS (4 cards):
+1. 🔴 Critical Card - Needs Improvement
+   - Số lượng + phần trăm
+   - Icon: AlertCircle (red)
+
+2. 🟡 Acceptable Card
+   - Số lượng + phần trăm
+   - Icon: AlertTriangle (yellow)
+
+3. 🟢 Excellent Card
+   - Số lượng + phần trăm
+   - Icon: CheckCircle2 (green)
+
+4. 🔵 Total Card
+   - Tổng số khóa học
+   - Icon: TrendingUp (blue)
+
+VIEW TOGGLE:
+- Historical Data button
+- Ongoing Prediction button
+
+───────────────────────────────────────────────────────────────────────────────
+  3.3 HistoricalView.jsx - Historical Analysis
+───────────────────────────────────────────────────────────────────────────────
+
+CHỨC NĂNG:
+- Phân tích dữ liệu khóa học đã hoàn thành
+- Visualization với Pie Chart và Stacked Bar Chart
+- Filter và pagination
+- Course detail modal
+
+STATE:
+const [courses, setCourses] = useState([]);
+const [loading, setLoading] = useState(true);
+const [filter, setFilter] = useState('all');
+const [currentPage, setCurrentPage] = useState(1);
+const [selectedCourse, setSelectedCourse] = useState(null);
+
+API:
+GET /api/historical-data
+
+CHARTS:
+1. PIE CHART - Phân bố theo CQS
+   - 🔴 Needs Improvement: #ef4444
+   - 🟡 Acceptable: #f97316
+   - 🟢 Excellent: #22c55e
+
+2. STACKED BAR CHART - Phân bố theo Enrollment Size
+   - Nhỏ (<50)
+   - Trung bình (50-200)
+   - Lớn (>200)
+
+FILTER BUTTONS:
+- All
+- Needs Improvement
+- Acceptable
+- Excellent
+
+PAGINATION:
+- 20 courses per page
+- Previous/Next buttons
+- Page numbers (max 5 visible)
+
+COURSE DETAIL MODAL:
+- Overview: CQS, CQV, Enrollment
+- Engagement: Comments, Views, Interactions
+- Quality Scores
+- Sentiment Analysis (nếu có)
+
+───────────────────────────────────────────────────────────────────────────────
+  3.4 OngoingView.jsx - Ongoing Predictions
+───────────────────────────────────────────────────────────────────────────────
+
+CHỨC NĂNG:
+- Dự đoán chất lượng khóa học đang diễn ra
+- Hiển thị predictions qua 3 phases
+- Warning alerts cho critical courses
+- Stage statistics và comparison chart
+
+STATE:
+const [courses, setCourses] = useState([]);
+const [criticalFilter, setCriticalFilter] = useState('all');
+const [selectedCourse, setSelectedCourse] = useState(null);
+
+API:
+GET /api/ongoing-prediction
+
+RESPONSE:
+Array<{
+  id, name, current_students,
+  data: Array<{
+    stage: 'Phase 1'|'Phase 2'|'Phase 3',
+    prediction: 'Needs Improvement'|'Acceptable'|'Excellent'|null
+  }>
+}>
+
+UI COMPONENTS:
+
+1. WARNING ALERT (nếu có critical courses)
+   - Background: red-950
+   - Icon: AlertTriangle
+   - Message: Số lượng courses cần can thiệp
+
+2. STAGE STATISTICS CARDS (3 cards - Phase 1, 2, 3)
+   Mỗi card hiển thị:
+   - Stage name + progress
+   - 🔴 Needs Improvement (count + %)
+   - 🟡 Acceptable (count + %)
+   - 🟢 Excellent (count + %)
+   - Progress bars
+   - "X khóa học chưa đạt giai đoạn này"
+
+   LOGIC TÍNH TOÁN:
+   // CHỈ tính courses có current_stage = phase đó
+   const coursesAtThisStage = courses.filter(c => 
+     getCurrentStage(c.data) === stageName
+   );
+
+3. COMPARISON CHART - Stacked Bar
+   - So sánh phân bố qua 3 phases
+   - Stack: Needs Improvement + Acceptable + Excellent
+
+4. CRITICAL COURSES TABLE
+   - Filter: All, Phase 1, Phase 2, Phase 3
+   - Columns: Name, Students, Stage, P1, P2, P3, Action
+   - Icons: ⚠️ (Needs Imp.), ⚡ (Acceptable), ✓ (Excellent), — (N/A)
+
+5. COURSE DETAIL MODAL
+   Sections:
+   - 📊 Trạng thái hiện tại
+   - 📚 Nội dung Khóa học
+   - 📈 Độ phủ & Hoàn thành (progress bars)
+   - 🎯 Dự đoán hiện tại
+   - 📈 Lịch sử Dự đoán (timeline)
+   - 💡 Khuyến nghị Hành động (nếu critical)
+
+───────────────────────────────────────────────────────────────────────────────
+  3.5 SystemReliability.jsx - Model Performance
+───────────────────────────────────────────────────────────────────────────────
+
+CHỨC NĂNG:
+- Đánh giá hiệu năng mô hình AI
+- Hiển thị metrics qua các phases
+- Đánh giá chất lượng dữ liệu
+- Sanity checks
+
+PERFORMANCE DATA:
+Phase 1: accuracy=0.69, recall=0.96, precision=0.71, macroF1=0.60
+Phase 2: accuracy=0.80, recall=0.94, precision=0.87, macroF1=0.70
+Phase 3: accuracy=0.82, recall=0.94, precision=0.90, macroF1=0.72
+
+═══ PHẦN 1: MODEL PERFORMANCE ═══
+
+1. HERO MESSAGE
+   - Giới thiệu khả năng phát hiện sớm
+   - Highlight: "phát hiện sớm" (green), "tăng dần" (blue)
+
+2. KEY HIGHLIGHTS (3 cards)
+   - 🎯 Phát hiện sớm: 96% Recall
+   - 📈 Độ chính xác tăng: 69% → 82%
+   - ⚡ Mục tiêu: Ưu tiên cảnh báo sớm
+
+3. PERFORMANCE TABLE
+   Columns: Phase, Range, Accuracy, Recall, Precision, Macro F1
+   Colors: White, Green, Orange, Purple
+
+4. METRICS EXPLANATION (4 cards)
+
+   🟢 RECALL (Needs Improvement)
+   - Định nghĩa: Trong tất cả khóa học THỰC SỰ cần cải thiện, 
+     mô hình PHÁT HIỆN ĐƯỢC bao nhiêu %
+   - Ý nghĩa: Không bỏ sót khóa học chất lượng thấp
+
+   🟠 PRECISION (Needs Improvement)
+   - Định nghĩa: Trong tất cả khóa học ĐƯỢC DỰ ĐOÁN cần cải thiện, 
+     có bao nhiêu % THỰC SỰ cần cải thiện
+   - Ý nghĩa: Giảm cảnh báo nhầm (false alarm)
+
+   🔵 ACCURACY (Tổng thể)
+   - Định nghĩa: Tỷ lệ dự đoán đúng trên TẤT CẢ các khóa học
+   - Ý nghĩa: Hiệu năng tổng quát của mô hình
+
+   🟣 MACRO F1
+   - Định nghĩa: Trung bình điều hòa F1-score trên cả 3 nhãn
+   - Ý nghĩa: Đánh giá công bằng cho dữ liệu mất cân bằng
+
+5. LINE CHART - Xu hướng Hiệu năng
+   - 4 lines: Accuracy (blue), Recall (green), Precision (orange), Macro F1 (purple)
+   - Y-axis: 0-100%
+   - Stroke width: 3, Dots: r=5
+
+═══ PHẦN 2: DATA QUALITY ═══
+
+1. SUMMARY CARDS (3)
+   - Completeness: 95.7% ✅ Rất tốt
+   - Consistency: 98.7% ✅ Xuất sắc
+   - Acc-DQ Score: 86.5/100 🚀 Model Ready
+     + Info tooltip: Giải thích Acc-DQ
+
+2. SANITY CHECKS (Collapsible)
+   - ✅ Arithmetic Health: 100%
+   - ✅ Data Drift: 99%
+   - ✅ Diversity: Tốt
+   - ✅ Batch Efficiency: 100%
+
+───────────────────────────────────────────────────────────────────────────────
+  3.6 AboutUs.jsx - Project Information
+───────────────────────────────────────────────────────────────────────────────
+
+SECTIONS:
+
+1. HERO
+   - Title: "Hệ thống Dự đoán Sớm Chất lượng Khóa học"
+   - Subtitle: "Chuyển đổi từ Hậu kiểm sang Giám sát thời gian thực"
+
+2. TỔNG QUAN
+   - Mô tả giải pháp
+   - Highlight: mất cân bằng dữ liệu
+
+3. GIẢI QUYẾT THÁCH THỨC (3 cards)
+   - ⏱️ Vấn đề Thời gian: Hậu kiểm → Trong kiểm
+   - 💰 Vấn đề Chi phí: Giám sát nội bộ tự động
+   - 📊 Vấn đề Dữ liệu: Xử lý imbalanced data
+
+4. KIẾN TRÚC HỆ THỐNG (5 bước)
+   1. Ingestion: Log hành vi, tương tác
+   2. Processing: COELO, AFELO, ACELO
+   3. Advanced Resampling: Oversampling + Undersampling
+   4. Ensemble Modeling: Voting từ 3 mô hình
+   5. Decision: Tính CQV, gán nhãn
+
+5. INPUT/OUTPUT (2 columns)
+   Input: User Logs, Academic Data, Social Data
+   Output: 3 nhãn CQS, CQV score, Early Warning
+
+6. TECHNOLOGY STACK (3 columns)
+   - Data Science: Pandas, NumPy, Imbalanced-learn
+   - ML Core: Scikit-learn, Voting Classifier
+   - Backend/Frontend: FastAPI, ReactJS + Recharts
+
+7. TEAM MEMBERS (grid 3 cols)
+   1. Lê Minh Kha - 23520664 (Leader)
+   2. Trần Quang Minh - 23520958
+   3. Trịnh Viết Xuân Quang - 23521294
+   4. Trần Đại Hải - 23521830
+   5. Nguyễn Hoàng Vy - 23520420
+   6. Nguyễn Hải Đăng - 23520228
+
+═══════════════════════════════════════════════════════════════════════════════
+  4. DESIGN SYSTEM
+═══════════════════════════════════════════════════════════════════════════════
+
+COLORS:
+
+Background:
+- Primary: slate-950 (#020617)
+- Secondary: slate-900 (#0f172a)
+- Tertiary: slate-800 (#1e293b)
+
+Borders:
+- Default: slate-700 (#334155)
+- Hover: slate-600 (#475569)
+
+Text:
+- Primary: white (#ffffff)
+- Secondary: slate-300 (#cbd5e1)
+- Tertiary: slate-400 (#94a3b8)
+- Muted: slate-500 (#64748b)
+
+Status:
+- Critical: red-500 (#ef4444)
+- Warning: orange-500 (#f97316)
+- Success: green-500 (#22c55e)
+- Info: blue-500 (#3b82f6)
+- Accent: purple-500 (#a855f7)
+
+TYPOGRAPHY:
+
+Font Sizes:
+- xs: 12px
+- sm: 14px
+- base: 16px
+- lg: 18px
+- xl: 20px
+- 2xl: 24px
+- 3xl: 30px
+
+Font Weights:
+- normal: 400
+- medium: 500
+- semibold: 600
+- bold: 700
+
+SPACING:
+- 1: 4px
+- 2: 8px
+- 3: 12px
+- 4: 16px
+- 6: 24px
+- 8: 32px
+
+BORDER RADIUS:
+- sm: 2px
+- default: 4px
+- md: 6px
+- lg: 8px
+- xl: 12px
+- full: 9999px
+
+═══════════════════════════════════════════════════════════════════════════════
+  5. API INTEGRATION
+═══════════════════════════════════════════════════════════════════════════════
+
+BASE URL:
+export const getApiUrl = (path) => {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return `${baseUrl}${path}`;
+};
+
+ENDPOINTS:
+
+1. STATS
+   GET /api/stats?type={historical|ongoing}
+   Response: { critical, acceptable, excellent, total, percentages }
+
+2. HISTORICAL DATA
+   GET /api/historical-data
+   Response: Array<Course>
+
+3. ONGOING PREDICTION
+   GET /api/ongoing-prediction
+   Response: Array<OngoingCourse>
+
+ERROR HANDLING:
+try {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+} catch (error) {
+  console.error('Error:', error);
+}
+
+═══════════════════════════════════════════════════════════════════════════════
+  6. LUỒNG DỮ LIỆU
+═══════════════════════════════════════════════════════════════════════════════
+
+APP INITIALIZATION:
+User opens app
+  ↓
+App.jsx (activeTab='dashboard')
+  ↓
+Dashboard.jsx mounts
+  ↓
+fetchStats() → API call
+  ↓
+Render stats cards
+  ↓
+HistoricalView.jsx mounts
+  ↓
+fetchHistoricalData() → API call
+  ↓
+Render charts & tables
+
+VIEW SWITCHING:
+User clicks "Ongoing Prediction"
+  ↓
+setView('ongoing')
+  ↓
+fetchStats(type='ongoing')
+  ↓
+OngoingView.jsx renders
+  ↓
+fetchOngoingData()
+  ↓
+Calculate stage stats
+  ↓
+Render UI
+
+═══════════════════════════════════════════════════════════════════════════════
+  7. RESPONSIVE DESIGN
+═══════════════════════════════════════════════════════════════════════════════
+
+BREAKPOINTS:
+- sm: 640px
+- md: 768px
+- lg: 1024px
+- xl: 1280px
+
+PATTERNS:
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+
+Stats Cards: 1 → 2 → 4 columns
+Charts: Full width, responsive height
+Tables: Horizontal scroll on mobile
+Modals: Full screen mobile, centered desktop
+
+═══════════════════════════════════════════════════════════════════════════════
+  8. CHARTS CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════════
+
+RECHARTS COMMON SETTINGS:
+
+<ResponsiveContainer width="100%" height="100%">
+  <Chart data={data}>
+    <CartesianGrid stroke="#334155" />
+    <XAxis tick={{ fill: '#94a3b8' }} />
+    <YAxis tick={{ fill: '#94a3b8' }} />
+    <Tooltip contentStyle={{
+      backgroundColor: '#1e293b',
+      border: '1px solid #334155',
+      borderRadius: '8px'
+    }} />
+    <Legend />
+  </Chart>
+</ResponsiveContainer>
+
+CHART TYPES:
+1. Pie Chart - CQS distribution
+2. Stacked Bar - Enrollment size, Phase comparison
+3. Line Chart - Performance metrics
+
+═══════════════════════════════════════════════════════════════════════════════
+  9. UTILITY FUNCTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+COLOR HELPER:
+const getPredictionColor = (prediction) => {
+  if (prediction === 'Needs Improvement') return '#ef4444';
+  if (prediction === 'Acceptable') return '#f97316';
+  if (prediction === 'Excellent') return '#22c55e';
+  return '#64748b';
+};
+
+DATA HELPERS:
+const getLatestPrediction = (courseData) => {
+  for (let i = courseData.length - 1; i >= 0; i--) {
+    if (courseData[i].prediction) return courseData[i].prediction;
+  }
+  return null;
+};
+
+const getCurrentStage = (courseData) => {
+  for (let i = courseData.length - 1; i >= 0; i--) {
+    if (courseData[i].prediction) return courseData[i].stage;
+  }
+  return courseData[0].stage;
+};
+
+FORMAT HELPERS:
+const formatNumber = (num) => num.toLocaleString();
+const formatPercentage = (num) => `${(num * 100).toFixed(1)}%`;
+
+═══════════════════════════════════════════════════════════════════════════════
+  10. DEPENDENCIES
+═══════════════════════════════════════════════════════════════════════════════
+
+PRODUCTION:
+- react: ^18.2.0
+- react-dom: ^18.2.0
+- recharts: ^2.x.x
+- lucide-react: ^0.x.x
+
+DEV:
+- @vitejs/plugin-react: ^4.x.x
+- vite: ^5.x.x
+- tailwindcss: ^3.x.x
+- postcss: ^8.x.x
+- autoprefixer: ^10.x.x
+
+═══════════════════════════════════════════════════════════════════════════════
+  END OF DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Version: 1.0
+Team: DS317
+Contact: Lê Minh Kha - 23520664
+Status: ✅ Production Ready

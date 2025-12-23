@@ -77,17 +77,18 @@ function AboutUs() {
             </p>
           </div>
 
-          {/* Data Problem */}
+          {/* Impact on Learners */}
           <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-12 h-12 bg-purple-900 rounded-lg flex items-center justify-center">
                 <Database className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="text-white font-semibold text-lg">Vấn đề Dữ liệu</h3>
+              <h3 className="text-white font-semibold text-lg">Tác động đến người học</h3>
             </div>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Dữ liệu giáo dục thực tế thường bị <span className="text-orange-400">lệch</span> (số lượng khóa học Tệ/Xuất sắc rất ít).
-              Hệ thống được thiết kế chuyên biệt để <span className="text-green-400">bắt được các tín hiệu thiểu số</span> đó.
+              Hệ thống giúp <span className="text-blue-400">phát hiện sớm</span> các khóa học có nguy cơ chất lượng thấp,
+              từ đó <span className="text-green-400">cải thiện trải nghiệm học tập</span>, giảm tỷ lệ bỏ học và
+              nâng cao chất lượng tổng thể của nền tảng.
             </p>
           </div>
         </div>

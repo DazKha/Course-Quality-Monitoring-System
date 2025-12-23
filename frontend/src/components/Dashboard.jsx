@@ -5,7 +5,7 @@ import OngoingView from './OngoingView';
 import { getApiUrl } from '../config';
 
 function Dashboard() {
-  const [view, setView] = useState('historical'); // 'historical' or 'ongoing'
+  const [view, setView] = useState('ongoing'); // 'historical' or 'ongoing'
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,14 +18,14 @@ function Dashboard() {
       const statsType = view === 'historical' ? 'historical' : 'ongoing';
       console.log(`Fetching stats from /api/stats?type=${statsType}...`);
       const response = await fetch(getApiUrl(`/api/stats?type=${statsType}`));
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log('Received stats:', data);
-      
+
       setStats(data);
       setLoading(false);
     } catch (error) {
@@ -117,8 +117,8 @@ function Dashboard() {
             <h2 className="text-xl font-bold text-white flex items-center space-x-2">
               <TrendingUp className="w-6 h-6 text-blue-500" />
               <span>
-                {view === 'historical' 
-                  ? 'Phân bố Chất lượng Khóa học' 
+                {view === 'historical'
+                  ? 'Phân bố Chất lượng Khóa học'
                   : 'Dự đoán sớm Chất lượng Khoá học Theo Giai đoạn'}
               </span>
             </h2>
@@ -133,21 +133,19 @@ function Dashboard() {
           <div className="flex bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setView('historical')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                view === 'historical'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'historical'
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               Historical Data
             </button>
             <button
               onClick={() => setView('ongoing')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                view === 'ongoing'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'ongoing'
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               Ongoing Prediction
             </button>
