@@ -6,9 +6,9 @@ function AboutUs() {
     { name: 'Lê Minh Kha', id: '23520664', role: 'Leader', icon: Award },
     { name: 'Trần Quang Minh', id: '23520958', role: 'Developer' },
     { name: 'Trịnh Viết Xuân Quang', id: '23521294', role: 'Developer' },
-    { name: 'Trần Đại Hải', id: '23521830', role: 'Developer' },
-    { name: 'Nguyễn Hoàng Vy', id: '23520420', role: 'Developer' },
-    { name: 'Nguyễn Hải Đăng', id: '23520228', role: 'Developer' },
+    { name: 'Trần Đại Hải', id: '23520420', role: 'Developer' },
+    { name: 'Nguyễn Hoàng Vy', id: '23521830', role: 'Developer' },
+    { name: 'Nguyễn Hải Đăng', id: '23520228', role: 'Do nothing in our project' },
   ];
 
   return (
